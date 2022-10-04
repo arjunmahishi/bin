@@ -1,0 +1,6 @@
+#!/bin/sh
+
+CONFIGS_PATH="/tmp/kubeconfig"
+
+export KUBECONFIG=$(find $CONFIGS_PATH -type f | fzf)
+echo "switched to $KUBECONFIG"
