@@ -1,0 +1,41 @@
+#!/bin/bash
+
+function get_services() {
+  kubectl get services --all-namespaces \
+    -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}'
+}
+
+function logs() {
+  choice=$(get_services | fzf)
+  service=$(echo $choice | awk -F '/' '{print "service/"$2}')
+  namespace=$(echo $choice | awk -F '/' '{print $1}')
+
+  kubectl logs $service --all-containers --namespace $namespace --follow
+}
+
+function help(){
+  echo "Usage: $(basename $0) <subcommand> [options]"
+  echo "Subcommands:"
+  echo "    log       tails logs of a service"
+  # echo "    configs   view decoded configs"
+  echo ""
+  echo "For help with each subcommand run:"
+  echo "$(basename $0) <subcommand> -h|--help"
+  echo ""
+}
+
+subcommand=$1
+case $subcommand in
+  "" | "-h" | "--help")
+    help
+    ;;
+  *)
+    shift
+    ${subcommand} $@
+    if [ $? = 127 ]; then
+      echo "Error: '$subcommand' is not a known subcommand." >&2
+      echo "       Run '$ProgName --help' for a list of known subcommands." >&2
+      exit 1
+    fi
+    ;;
+esac
